@@ -1,0 +1,96 @@
+// forked by imkiva/fluorine-rs/lang/src/syntax/grammar.pest
+
+unit = { (WHITESPACE | COMMENT | assert | define_function | expr)* ~ EOI }
+
+define_function = { function_call ~ relational_op ~ (expr | case*) }
+
+case = { "case" ~ expr ~ "{" ~ expr ~ "}" }
+
+assert = { id ~ relational_op ~ expr }
+
+function_call = { expr ~ "(" ~ expr ~ ")" }
+
+expr = { expr_relational ~ (logical_op ~ expr_relational)* }
+
+
+logical_op = { "&&" | "||" }
+
+relational_op = { "<=" | "<" | ">=" | ">" | "=" | "!=" }
+
+level1_op = { "+" | "-" }
+
+level2_op = { "*" | "/" }
+
+level3_op = { "^" }
+
+unary_op = { "!" }
+
+expr_relational = { expr_binary_level1 ~ (relational_op ~ expr_binary_level1)* }
+
+expr_binary_level1 = { expr_binary_level2 ~ (level1_op ~ expr_binary_level2)* }
+
+expr_binary_level2 = { expr_binary_level3 ~ (level2_op ~ expr_binary_level3)* }
+
+expr_binary_level3 = { expr_unary ~ (level3_op ~ expr_unary)? }
+
+expr_unary = { expr_atom ~ atom_postfix* }
+
+atom_postfix = { postfix_apply
+            //    | postfix_member
+               }
+
+postfix_apply = { "(" ~ expr ~ ("," ~ expr)* ~ ","? ~ ")" }
+
+expr_atom = { "(" ~ expr? ~ ")"
+            | literal
+            | id
+            | unknown
+            }
+
+unknown = $ { "?" }
+
+literal = { number_lit
+          //| bool_lit
+          //| string_lit
+          }
+
+number_lit = $ { number_hex
+               | number_oct
+               | number_bin
+               | number_dec
+               }
+
+
+number_dec = _ { ("+" | "-")? ~ ASCII_DIGIT+ }
+
+number_oct = _ { ("+" | "-")? ~ "0o" ~ ASCII_OCT_DIGIT+ }
+
+number_hex = _ { ("+" | "-")? ~ "0x" ~ ASCII_HEX_DIGIT+ }
+
+number_bin = _ { ("+" | "-")? ~ "0b" ~ ASCII_BIN_DIGIT+ }
+
+bool_lit = { "true" | "false" }
+
+/*
+string_lit = $ { "\"" ~ (escape | (!("\\" | "\"") ~ ANY)+)* ~ "\""}
+
+escape = _{ "\\\\"
+          | "\\\""
+          | "\\'"
+          | "\\n"
+          | "\\r"
+          | "\\t"
+          }
+*/
+
+id = $ { (ASCII_ALPHA_LOWER | UNDERLINE | "$") ~ (ASCII_ALPHANUMERIC | UNDERLINE | "$")* }
+
+UNDERLINE = _ { "_" }
+
+WHITESPACE = _ { " "
+               | "\t"
+               | WHITE_SPACE
+               | NEWLINE
+               }
+
+COMMENT = _ { "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE? }
